@@ -1,0 +1,10 @@
+Welcome!
+
+This file will help you get setup so we can start programming.
+
+Installing Python:
+We will be programming in the Python programming language.
+Python is open-source and can be downloaded for free online
+at python.org/download/. However, we recommend downloading
+the Anaconda distrobution from Continuum Analytics.  This can
+be found online at continuum.io/downloads/
