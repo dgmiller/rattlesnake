@@ -1,0 +1,4 @@
+import solutions as sol
+from WordList import create_word_list
+
+sol.sort_words(filename = 'wordbank.txt')
