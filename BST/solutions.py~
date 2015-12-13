@@ -152,13 +152,13 @@ def plot_times(filename="English.txt", start=500, stop=5500, step=500):
             timedC = end - begin
             Clist.append(timedC)
 
-    #plt.subplot(121)
+    plt.subplot(121)
     plt.title("Build Times")
-    plt.plot(range(start, stop, step), Atimes, Btimes, Ctimes)
+    plt.plot([start, stop, step], [Atimes, Btimes, Ctimes])
 
-    #plt.subplot(122)
-    #plt.title("Search Times")
-    #plt.plot(range(start, stop, step), Alist, Blist, Clist)
+    plt.subplot(122)
+    plt.title("Search Times")
+    plt.plot([start, stop, step], [Alist, Blist, Clist])
 
     plt.show()
 

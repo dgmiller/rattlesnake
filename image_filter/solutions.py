@@ -108,6 +108,8 @@ def sobelFilter(image):
     X = Filter(A, S)
     Y = Filter(A, S.T)
     B = np.sqrt(X**2 + Y**2) # This B is the gradient of A
+    m = B.max()
+    B /= m
     M = B.mean()*4
     B[B>M] = 1.
     B[B<=M] = 0.

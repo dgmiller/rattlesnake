@@ -125,17 +125,17 @@ class BST(object):
         target = self.find(data) # this should catch empty trees and if data not in tree
         if target.data == self.root.data:
             if target.right is None and target.left is None:
-                target.data = None
+                target = None
             elif target.right is None and target.left is not None:
                 left_node = target.left
                 self.root = left_node
                 target.left = None
-                target.data = None
+                target = None
             elif target.left is None and target.right is not None:
                 right_node = target.right
                 self.root = right_node
                 target.right = None
-                target.data = None
+                target = None
             else:
                 new_data = two_children(target.right)
                 self.remove(new_data)
@@ -154,7 +154,6 @@ class BST(object):
                 parent.left = left_child # parent now connects to target's left child
                 target.prev = None
                 target.left = None
-                target.data = None
                 target = None
             else: # target is to the right of parent
                 left_child = target.left
@@ -163,7 +162,6 @@ class BST(object):
                 parent.right = left_child
                 target.prev = None
                 target.left = None
-                target.data = None
                 target = None
         elif target.left is None and target.right is not None: # target has a right child
             if target.prev.data > target.data: # target is to the left of parent
@@ -173,7 +171,6 @@ class BST(object):
                 parent.left = right_child
                 target.prev = None
                 target.right = None
-                target.data = None
                 target = None
             else: # target is to the right of parent
                 right_child = target.right
@@ -182,7 +179,6 @@ class BST(object):
                 parent.right = right_child # parent connects to target's right child
                 target.prev = None
                 target.right = None
-                target.data = None
                 target = None
         else:
             new_data = two_children(target.right)
