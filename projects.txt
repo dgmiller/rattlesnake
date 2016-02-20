@@ -1,9 +1,0 @@
-====PROJECTS====
-
-	> continue 0ptimus voterfile prediction
-
-	> notebook ACME labs
-
-	> start a kaggle project
-
-	> project euler (as always)
