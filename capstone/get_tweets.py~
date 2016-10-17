@@ -3,10 +3,8 @@
 from tweepy import Stream
 from tweepy import OAuthHandler
 from tweepy.streaming import StreamListener
-import pandas as pd
 import json
 import os
-import time
 
 
 # Authentication tokens and keys
@@ -17,15 +15,20 @@ asecret = "NgOmykbCoVEWVv6uRFeYlOTmFweH5h2fJOhZi6KGah8pN"
 
 # The listener receives the data
 class listener(StreamListener):
-    def on_data(self, data):
-        # Twitter returns data in JSON format which needs to be decoded
-        df = pd.read_json(data)
-        # Converts UTF-8 to ASCII
-        print(df.head())
-        return False
-        
-    def on_error(self, status):
-        print status
+	def on_data(self, data):
+		# Twitter returns data in JSON format which needs to be decoded
+		decoded = json.loads(data)
+
+		# Converts UTF-8 to ASCII
+                print "@%s: (%s) %s" % (
+                        decoded['user']['screen_name'],
+                        decoded['created_at'],
+                        decoded['text'].encode('ascii', 'ignore'))
+		print ''
+		return True
+
+	def on_error(self, status):
+		print status
 
 auth = OAuthHandler(ckey, csecret)
 auth.set_access_token(atoken, asecret)
