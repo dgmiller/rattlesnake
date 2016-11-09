@@ -36,7 +36,7 @@ class listener(StreamListener):
                 F.close()
         except:
             print('error')
-        if time.time() - start > 1800:
+        if time.time() - start > 3600:
             return False
         return True
         
