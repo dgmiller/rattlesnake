@@ -18,10 +18,10 @@ class TwitterCorpus(object):
         self.timestamps = []
         self.time = []
         self.pos = None
-        err = 0
         for line in self.data:
             line = line.split('\t')
             # get everything except for the tweet
+            err = 0
             try:
                 # number of followers, statuses, and friends
                 self.user_stats.append([float(j) for j in line[1:-1]])
