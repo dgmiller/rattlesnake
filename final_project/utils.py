@@ -64,6 +64,8 @@ class TwitterCorpus(object):
         self.mentions = []
         self.weblinks = []
         self.hashtags = []
+        self.u_mentions = []
+        self.u_hashtags = []
         end = time.time()
         print("Time: %s" % (end-start))
         
@@ -76,16 +78,14 @@ class TwitterCorpus(object):
             hashtags = re.findall(r'#\w*',s)
             weblinks = re.findall(r'http\S*',s)
             retweets = re.findall('^RT ',s)
-            #punc = re.findall(r"[\?:,';]",s)
-            #punc_ = re.findall(r'[\.-]',s)
             self.mentions.append(mentions)
             self.hashtags.append(hashtags)
             self.weblinks.append(len(weblinks))
             self.retweets.append(len(retweets))
             for m in mentions:
-                s = s.replace(m,"")
+                self.u_mentions.append(m)
             for h in hashtags:
-                s = s.replace(h,"")
+                self.u_hashtags.append(h)
             for w in weblinks:
                 s = s.replace(w,"")
             for r in retweets:
@@ -119,19 +119,34 @@ class TwitterCorpus(object):
         
 def load_candidate():
     filename = get_file()
-    djt = TwitterCorpus(filename,None)
+    c = TwitterCorpus(filename,None)
     print("\nclean_text")
-    djt.clean_text()
-    #print("\ntokenize_tag")
-    #djt.tokenize_tag()
+    c.clean_text()
     print("\nconvert time")
-    djt.convert_time()
-    return djt
+    c.convert_time()
+    return c
     
-def load_df():
-    c = load_candidate()
-    L = ['date','time','RT','weblinks','usr_fol',
-        'usr_stat','usr_fri','hashtags','mentions','tweet']
-    return 0
-        
+filepath = '/media/derek/FAMHIST/Data/final_project/'
+filenames = ['trump_oct19.csv','trump_oct20.csv',
+             'trump_oct24.csv','trump_oct26.csv',
+             'trump_nov01.csv','trump_nov02.csv',
+             'trump_nov03.csv','trump_nov05.csv',
+             'trump_nov06.csv','trump_nov07.csv',
+             'trump_nov08.csv','trump_nov09.csv']
+def load_trump_df():
+    """docstring"""
+    f0 = filepath + filenames[0]
+    tdf = pd.read_csv(f0)
+    for f in filenames[1:]:
+        f_ = filepath + f
+        df = pd.read_csv(f_)
+        tdf = tdf.append(df)
+    return tdf
 
+def get_items_from_lists(datalist):
+    uni = []
+    for L in datalist:
+        if len(L) > 0:
+            for entry in L:
+                uni.append(entry)
+    return uni
