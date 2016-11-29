@@ -72,8 +72,11 @@ class TwitterCorpus(object):
     def clean_text(self):
         start = time.time()
         tweetwords = []
+        u_h = []
+        u_m = []
         for s in self.words:
             s = s.replace('"""','')
+            s = s.lower()
             mentions = re.findall(r'@\w*',s)
             hashtags = re.findall(r'#\w*',s)
             weblinks = re.findall(r'http\S*',s)
@@ -83,14 +86,12 @@ class TwitterCorpus(object):
             self.weblinks.append(len(weblinks))
             self.retweets.append(len(retweets))
             for m in mentions:
-                self.u_mentions.append(m)
+                u_m.append(m)
             for h in hashtags:
-                self.u_hashtags.append(h)
-            for w in weblinks:
-                s = s.replace(w,"")
-            for r in retweets:
-                s = s.replace(r,'')
-            tweetwords.append(s.lower())
+                u_h.append(h)
+            tweetwords.append(s)
+        self.u_mentions = np.unique(u_m)
+        self.u_hashtags = np.unique(u_h)
         self.words = tweetwords
         end = time.time()
         print("Time: %s" % (end-start))
@@ -116,6 +117,19 @@ class TwitterCorpus(object):
         self.time = np.array(self.time)
         end = time.time()
         print("Time: %s" % (end-start))
+
+    def make_df(self):
+        df = pd.DataFrame()
+        df['date'] = self.time[:,0]
+        df['timestamp'] = self.timestamps
+	df['usr_fol'] = self.user_stats[:,0]
+	df['usr_num_stat'] = self.user_stats[:,1]
+	df['usr_fri'] = self.user_stats[:,2]
+	df['RT'] = self.retweets
+	df['n_weblinks'] = self.weblinks
+	df['mentions'] = self.mentions
+	df['hashtags'] = self.hashtags
+	return df
         
 def load_candidate():
     filename = get_file()
@@ -125,28 +139,3 @@ def load_candidate():
     print("\nconvert time")
     c.convert_time()
     return c
-    
-filepath = '/media/derek/FAMHIST/Data/final_project/'
-filenames = ['trump_oct19.csv','trump_oct20.csv',
-             'trump_oct24.csv','trump_oct26.csv',
-             'trump_nov01.csv','trump_nov02.csv',
-             'trump_nov03.csv','trump_nov05.csv',
-             'trump_nov06.csv','trump_nov07.csv',
-             'trump_nov08.csv','trump_nov09.csv']
-def load_trump_df():
-    """docstring"""
-    f0 = filepath + filenames[0]
-    tdf = pd.read_csv(f0)
-    for f in filenames[1:]:
-        f_ = filepath + f
-        df = pd.read_csv(f_)
-        tdf = tdf.append(df)
-    return tdf
-
-def get_items_from_lists(datalist):
-    uni = []
-    for L in datalist:
-        if len(L) > 0:
-            for entry in L:
-                uni.append(entry)
-    return uni

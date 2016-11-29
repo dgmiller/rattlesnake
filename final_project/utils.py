@@ -1,4 +1,7 @@
 import re
+from scipy.sparse import csr_matrix
+from sklearn.preprocessing import normalize
+from sklearn.feature_extraction.text import TfidfVectorizer as Vec
 import numpy as np
 import pandas as pd
 import string
@@ -32,15 +35,14 @@ def get_file():
 
 class TwitterCorpus(object):
     
-    def __init__(self,filename,n):
+    def __init__(self,filename,n,m):
         print("Loading file...")
         start = time.time()
-        self.data = open(filename,'r').readlines()[:n]
-        self.words = []
+        self.data = open(filename,'r').readlines()[n:m]
+        self.tweets = []
         self.user_stats = []
         self.timestamps = []
         self.time = []
-        self.pos_tag = None
         err = 0
         for i,line in enumerate(self.data):
             line = line.split('\t')
@@ -51,7 +53,7 @@ class TwitterCorpus(object):
                 # time that the tweet was sent
                 self.timestamps.append(float(line[0][:10]))
                 # content of the tweet
-                self.words.append(line[-1])
+                self.tweets.append(line[-1])
             except:
                 print i,line
                 err += 1
@@ -72,39 +74,29 @@ class TwitterCorpus(object):
     def clean_text(self):
         start = time.time()
         tweetwords = []
-        for s in self.words:
+        u_h = []
+        u_m = []
+        for s in self.tweets:
+            m_str = ""
+            h_str = ""
             s = s.replace('"""','')
+            s = s.lower()
             mentions = re.findall(r'@\w*',s)
             hashtags = re.findall(r'#\w*',s)
             weblinks = re.findall(r'http\S*',s)
-            retweets = re.findall('^RT ',s)
-            self.mentions.append(mentions)
-            self.hashtags.append(hashtags)
+            retweets = re.findall('^rt ',s)
+            self.mentions.append(len(mentions))
+            self.hashtags.append(len(hashtags))
             self.weblinks.append(len(weblinks))
             self.retweets.append(len(retweets))
             for m in mentions:
-                self.u_mentions.append(m)
+                u_m.append(m)
             for h in hashtags:
-                self.u_hashtags.append(h)
-            for w in weblinks:
-                s = s.replace(w,"")
-            for r in retweets:
-                s = s.replace(r,'')
-            tweetwords.append(s.lower())
-        self.words = tweetwords
-        end = time.time()
-        print("Time: %s" % (end-start))
-        
-    def tokenize_tag(self):
-        start = time.time()
-        L = len(self.words)
-        tagged = []
-        for i,t in enumerate(self.words):
-            if i % int(L/4):
-                print(float(i)/L)
-            tokens = nltk.word_tokenize(t)
-            tagged.append(nltk.pos_tag(tokens))
-        self.pos_tag = tagged
+                u_h.append(h)
+            tweetwords.append(s)
+        self.u_mentions = np.unique(u_m)
+        self.u_hashtags = np.unique(u_h)
+        self.tweets = tweetwords
         end = time.time()
         print("Time: %s" % (end-start))
     
@@ -116,37 +108,45 @@ class TwitterCorpus(object):
         self.time = np.array(self.time)
         end = time.time()
         print("Time: %s" % (end-start))
-        
-def load_candidate():
+
+    def make_df(self):
+        df = pd.DataFrame()
+        df['date'] = self.time[:,0]
+        df['timestamp'] = self.timestamps
+        df['usr_fol'] = self.user_stats[:,0]
+        df['usr_num_stat'] = self.user_stats[:,1]
+        df['usr_fri'] = self.user_stats[:,2]
+        df['n_weblinks'] = self.weblinks
+        df['n_mentions'] = self.mentions
+        df['n_hashtags'] = self.hashtags
+        df['RT'] = self.retweets
+        return df
+    
+    def tokenize(self):
+        start = time.time()
+        self.V = Vec(ngram_range=(2,3),
+                     stop_words='english',
+                     min_df=100,
+                     max_df=.8,
+                     sublinear_tf=True,
+                     use_idf=True)
+        self.V.fit(self.tweets)
+        end = time.time()
+        print("Time: %s" % (end-start))
+
+def load_candidate(n=0,m=-1000):
+    """
+    Trump: (1284126,)
+    Clinton: (,)
+    """
     filename = get_file()
-    c = TwitterCorpus(filename,None)
+    c = TwitterCorpus(filename,n,m)
     print("\nclean_text")
     c.clean_text()
     print("\nconvert time")
     c.convert_time()
+    print("\ntokenize")
+    c.tokenize()
     return c
-    
-filepath = '/media/derek/FAMHIST/Data/final_project/'
-filenames = ['trump_oct19.csv','trump_oct20.csv',
-             'trump_oct24.csv','trump_oct26.csv',
-             'trump_nov01.csv','trump_nov02.csv',
-             'trump_nov03.csv','trump_nov05.csv',
-             'trump_nov06.csv','trump_nov07.csv',
-             'trump_nov08.csv','trump_nov09.csv']
-def load_trump_df():
-    """docstring"""
-    f0 = filepath + filenames[0]
-    tdf = pd.read_csv(f0)
-    for f in filenames[1:]:
-        f_ = filepath + f
-        df = pd.read_csv(f_)
-        tdf = tdf.append(df)
-    return tdf
 
-def get_items_from_lists(datalist):
-    uni = []
-    for L in datalist:
-        if len(L) > 0:
-            for entry in L:
-                uni.append(entry)
-    return uni
+
