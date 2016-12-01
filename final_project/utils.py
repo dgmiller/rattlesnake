@@ -61,13 +61,10 @@ class TwitterCorpus(object):
         # convert to numpy array
         self.timestamps = np.array(self.timestamps)
         self.user_stats = np.array(self.user_stats)
-        # other variables defined later
+        self.n_mentions = []
+        self.n_hashtags = []
+        self.n_weblinks = []
         self.retweets = []
-        self.mentions = []
-        self.weblinks = []
-        self.hashtags = []
-        self.u_mentions = []
-        self.u_hashtags = []
         end = time.time()
         print("Time: %s" % (end-start))
         
@@ -85,15 +82,26 @@ class TwitterCorpus(object):
             hashtags = re.findall(r'#\w*',s)
             weblinks = re.findall(r'http\S*',s)
             retweets = re.findall('^rt ',s)
-            self.mentions.append(len(mentions))
-            self.hashtags.append(len(hashtags))
-            self.weblinks.append(len(weblinks))
+            numbers = re.findall(r'[0-9]+',s)
+            self.n_mentions.append(len(mentions))
+            self.n_hashtags.append(len(hashtags))
+            self.n_weblinks.append(len(weblinks))
             self.retweets.append(len(retweets))
             for m in mentions:
                 u_m.append(m)
+                s = s.replace(m,'')
             for h in hashtags:
                 u_h.append(h)
+                s = s.replace(h,'')
+            for w in weblinks:
+                s = s.replace(w,'')
+            for r in retweets:
+                s = s.replace(r,'')
+            for n in numbers:
+                s = s.replace(n,'')
             tweetwords.append(s)
+        self.mentions = u_m
+        self.hashtags = u_h
         self.u_mentions = np.unique(u_m)
         self.u_hashtags = np.unique(u_h)
         self.tweets = tweetwords
@@ -112,27 +120,42 @@ class TwitterCorpus(object):
     def make_df(self):
         df = pd.DataFrame()
         df['date'] = self.time[:,0]
+        df['time'] = self.time[:,1]
         df['timestamp'] = self.timestamps
         df['usr_fol'] = self.user_stats[:,0]
         df['usr_num_stat'] = self.user_stats[:,1]
         df['usr_fri'] = self.user_stats[:,2]
-        df['n_weblinks'] = self.weblinks
-        df['n_mentions'] = self.mentions
-        df['n_hashtags'] = self.hashtags
+        df['n_weblinks'] = self.n_weblinks
+        df['n_mentions'] = self.n_mentions
+        df['n_hashtags'] = self.n_hashtags
         df['RT'] = self.retweets
         return df
     
-    def tokenize(self):
+    def tokenize_hashtags(self):
         start = time.time()
         self.V = Vec(ngram_range=(2,3),
                      stop_words='english',
                      min_df=100,
-                     max_df=.8,
+                     max_df=.95,
                      sublinear_tf=True,
                      use_idf=True)
-        self.V.fit(self.tweets)
+        H = self.V.fit_transform(self.hashtags)
         end = time.time()
         print("Time: %s" % (end-start))
+        return H
+    
+    def tokenize_mentions(self):
+        start = time.time()
+        self.V = Vec(ngram_range=(2,3),
+                     stop_words='english',
+                     min_df=100,
+                     max_df=.95,
+                     sublinear_tf=True,
+                     use_idf=True)
+        M = self.V.fit_transform(self.mentions)
+        end = time.time()
+        print("Time: %s" % (end-start))
+        return M
 
 def load_candidate(n=0,m=-1000):
     """
@@ -145,8 +168,6 @@ def load_candidate(n=0,m=-1000):
     c.clean_text()
     print("\nconvert time")
     c.convert_time()
-    print("\ntokenize")
-    c.tokenize()
     return c
 
 
