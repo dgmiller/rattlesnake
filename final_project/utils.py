@@ -36,7 +36,7 @@ def get_file():
 class TwitterCorpus(object):
     
     def __init__(self,filename,n,m):
-        print("Loading file...")
+        print("Loading file...\n")
         start = time.time()
         self.data = open(filename,'r').readlines()[n:m]
         self.tweets = []
@@ -112,18 +112,16 @@ class TwitterCorpus(object):
         start = time.time()
         for t in self.timestamps:
             d = datetime.datetime.fromtimestamp(t)
-            self.time.append([d.date(),d.time()])
+            self.time.append(d)
         self.time = np.array(self.time)
         end = time.time()
         print("Time: %s" % (end-start))
 
     def make_df(self):
         df = pd.DataFrame()
-        df['date'] = self.time[:,0]
-        df['time'] = self.time[:,1]
-        df['timestamp'] = self.timestamps
+        df['time'] = self.time
         df['usr_fol'] = self.user_stats[:,0]
-        df['usr_num_stat'] = self.user_stats[:,1]
+        df['usr_n_stat'] = self.user_stats[:,1]
         df['usr_fri'] = self.user_stats[:,2]
         df['n_weblinks'] = self.n_weblinks
         df['n_mentions'] = self.n_mentions
@@ -133,8 +131,7 @@ class TwitterCorpus(object):
     
     def tokenize_hashtags(self):
         start = time.time()
-        self.V = Vec(ngram_range=(2,3),
-                     stop_words='english',
+        self.V = Vec(max_features=100,
                      min_df=100,
                      max_df=.95,
                      sublinear_tf=True,
@@ -146,11 +143,7 @@ class TwitterCorpus(object):
     
     def tokenize_mentions(self):
         start = time.time()
-        self.V = Vec(ngram_range=(2,3),
-                     stop_words='english',
-                     min_df=100,
-                     max_df=.95,
-                     sublinear_tf=True,
+        self.V = Vec(sublinear_tf=True,
                      use_idf=True)
         M = self.V.fit_transform(self.mentions)
         end = time.time()
